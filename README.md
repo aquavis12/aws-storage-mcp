@@ -27,8 +27,8 @@ This AWS Storage MCP server connects Amazon Q to your AWS storage services, allo
 3. **Get information** about your storage resources in a conversational manner
 4. **Manage multiple storage services** from a single interface
 
-## Architecture
-[Architecture](/docs/arch.drawio.png)
+## Architecture Diagram
+![](/docs/arch.drawio.png)
 
 ## Supported AWS Storage Services
 
