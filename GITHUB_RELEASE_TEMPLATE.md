@@ -1,4 +1,4 @@
-# AWS Storage MCP Server v1.0.0
+# AWS Storage MCP Server v1.0.1
 
 First stable release of AWS Storage MCP Server with S3 object-level operations.
 
