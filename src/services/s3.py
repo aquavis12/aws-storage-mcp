@@ -520,6 +520,122 @@ class S3Service(BaseService):
         except ClientError as e:
             logger.error(f"Error deleting public access block for bucket {bucket_name}: {e}")
             return {"status": "error", "message": str(e)}
+            
+    def get_object(self, bucket_name, object_key):
+        """
+        Get an object from an S3 bucket
+        
+        Args:
+            bucket_name (str): Name of the S3 bucket
+            object_key (str): Key of the object to retrieve
+        """
+        try:
+            s3_client = self._get_client('s3')
+            response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
+            
+            # Read the object content
+            content = response['Body'].read()
+            
+            # Try to decode as text if possible
+            try:
+                content_str = content.decode('utf-8')
+                is_text = True
+            except UnicodeDecodeError:
+                content_str = None
+                is_text = False
+            
+            result = {
+                "status": "success",
+                "metadata": {
+                    "content_type": response.get('ContentType'),
+                    "content_length": response.get('ContentLength'),
+                    "last_modified": response.get('LastModified').isoformat() if response.get('LastModified') else None,
+                    "etag": response.get('ETag'),
+                    "is_text": is_text
+                }
+            }
+            
+            # Include content if it's text and not too large
+            if is_text and len(content_str) < 1024 * 1024:  # Limit to 1MB
+                result["content"] = content_str
+            elif is_text:
+                result["message"] = "Content too large to display (> 1MB). Use a more specific operation to download."
+            else:
+                result["message"] = "Binary content. Use a more specific operation to download."
+                
+            return result
+            
+        except ClientError as e:
+            logger.error(f"Error getting object {object_key} from bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def put_object(self, bucket_name, object_key, content, content_type=None):
+        """
+        Put an object into an S3 bucket
+        
+        Args:
+            bucket_name (str): Name of the S3 bucket
+            object_key (str): Key for the object
+            content (str): Content to upload
+            content_type (str): Content type of the object (optional)
+        """
+        # Request confirmation before uploading object
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="S3 object",
+            params={
+                "bucket_name": bucket_name,
+                "object_key": object_key,
+                "content_type": content_type or "application/octet-stream"
+            }
+        )
+        
+        if confirmation:
+            return confirmation
+            
+        try:
+            s3_client = self._get_client('s3')
+            
+            # Prepare parameters
+            params = {
+                'Bucket': bucket_name,
+                'Key': object_key,
+                'Body': content
+            }
+            
+            # Add content type if provided
+            if content_type:
+                params['ContentType'] = content_type
+                
+            # Upload the object
+            s3_client.put_object(**params)
+            
+            return {
+                "status": "success",
+                "message": f"Object {object_key} uploaded to bucket {bucket_name} successfully"
+            }
+        except ClientError as e:
+            logger.error(f"Error uploading object {object_key} to bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def delete_object(self, bucket_name, object_key):
+        """
+        Delete an object from an S3 bucket
+        
+        Args:
+            bucket_name (str): Name of the S3 bucket
+            object_key (str): Key of the object to delete
+        """
+        try:
+            s3_client = self._get_client('s3')
+            s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+            return {
+                "status": "success",
+                "message": f"Object {object_key} deleted from bucket {bucket_name} successfully"
+            }
+        except ClientError as e:
+            logger.error(f"Error deleting object {object_key} from bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
     
     def put_bucket_website(self, bucket_name, index_document, error_document=None, redirect_all_requests_to=None):
         """

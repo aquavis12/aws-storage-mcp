@@ -6,6 +6,16 @@
 
 A Model Context Protocol (MCP) server that enables natural language interactions with AWS storage services through Amazon Q CLI.
 
+## Disclaimer
+
+This project is provided "as is" without warranty of any kind, express or implied. The authors and contributors are not responsible for any damages or liabilities that may arise from using this software.
+
+- **Not an Official AWS Product**: This is a community project and is not officially supported by Amazon Web Services.
+- **Use at Your Own Risk**: Review all operations before executing them, especially those that modify or delete resources.
+- **Cost Implications**: Using AWS services may incur costs to your AWS account. You are responsible for monitoring and managing these costs.
+- **Security Considerations**: This tool requires AWS credentials to function. Always follow security best practices when handling credentials.
+- **No Liability**: The authors and contributors cannot be held liable for any data loss, unexpected charges, or other damages resulting from the use of this software.
+
 ## What is MCP?
 
 The Model Context Protocol (MCP) is an open protocol that standardizes how applications provide context to Large Language Models (LLMs). MCP enables communication between LLMs like Amazon Q and locally running MCP servers that provide additional tools and capabilities.

@@ -198,6 +198,17 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
                 result = self.s3_service.list_buckets()
             elif action == 's3_list_objects':
                 result = self.s3_service.list_objects(params.get('bucket_name'), params.get('prefix', ''))
+            elif action == 's3_get_object':
+                result = self.s3_service.get_object(params.get('bucket_name'), params.get('object_key'))
+            elif action == 's3_put_object':
+                result = self.s3_service.put_object(
+                    params.get('bucket_name'),
+                    params.get('object_key'),
+                    params.get('content'),
+                    params.get('content_type')
+                )
+            elif action == 's3_delete_object':
+                result = self.s3_service.delete_object(params.get('bucket_name'), params.get('object_key'))
             elif action == 's3_get_bucket_location':
                 result = self.s3_service.get_bucket_location(params.get('bucket_name'))
             elif action == 's3_get_bucket_policy':
@@ -491,6 +502,9 @@ if __name__ == "__main__":
             # S3 operations
             's3_list_buckets',
             's3_list_objects',
+            's3_get_object',
+            's3_put_object',
+            's3_delete_object',
             's3_get_bucket_location',
             's3_get_bucket_policy',
             's3_get_bucket_versioning',
