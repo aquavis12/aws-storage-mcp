@@ -1,0 +1,405 @@
+{
+  "schema_version": "1.0",
+  "name": "aws-storage",
+  "version": "1.0.0",
+  "description": "MCP server for interacting with AWS storage services",
+  "host": "localhost",
+  "port": 8080,
+  "tools": [
+    {
+      "name": "list_aws_profiles",
+      "description": "List all available AWS profiles",
+      "parameters": {}
+    },
+    {
+      "name": "set_profile",
+      "description": "Set the AWS profile to use for subsequent operations",
+      "parameters": {
+        "profile_name": {
+          "type": "string",
+          "description": "Name of the AWS profile to use"
+        }
+      }
+    },
+    {
+      "name": "s3_list_buckets",
+      "description": "List all S3 buckets",
+      "parameters": {}
+    },
+    {
+      "name": "s3_list_objects",
+      "description": "List objects in an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Optional prefix to filter objects",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "s3_get_bucket_location",
+      "description": "Get the region where an S3 bucket is located",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        }
+      }
+    },
+    {
+      "name": "s3_get_bucket_policy",
+      "description": "Get the policy for an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        }
+      }
+    },
+    {
+      "name": "s3_get_bucket_versioning",
+      "description": "Get versioning status for an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        }
+      }
+    },
+    {
+      "name": "s3_get_object_acl",
+      "description": "Get the ACL for an S3 object",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        },
+        "object_key": {
+          "type": "string",
+          "description": "Key of the S3 object"
+        }
+      }
+    },
+    {
+      "name": "s3_create_bucket",
+      "description": "Create a new S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket to create"
+        }
+      }
+    },
+    {
+      "name": "s3_delete_bucket",
+      "description": "Delete an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket to delete"
+        }
+      }
+    },
+    {
+      "name": "ebs_list_volumes",
+      "description": "List all EBS volumes",
+      "parameters": {}
+    },
+    {
+      "name": "ebs_create_volume",
+      "description": "Create a new EBS volume",
+      "parameters": {
+        "size": {
+          "type": "integer",
+          "description": "Size of the volume in GiB"
+        },
+        "volume_type": {
+          "type": "string",
+          "description": "Type of EBS volume (gp3, io1, io2, st1, sc1, standard)",
+          "required": false
+        },
+        "availability_zone": {
+          "type": "string",
+          "description": "Availability Zone to create the volume in"
+        }
+      }
+    },
+    {
+      "name": "ebs_delete_volume",
+      "description": "Delete an EBS volume",
+      "parameters": {
+        "volume_id": {
+          "type": "string",
+          "description": "ID of the EBS volume to delete"
+        }
+      }
+    },
+    {
+      "name": "ebs_create_snapshot",
+      "description": "Create a snapshot of an EBS volume",
+      "parameters": {
+        "volume_id": {
+          "type": "string",
+          "description": "ID of the EBS volume"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the snapshot",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "ebs_list_snapshots",
+      "description": "List EBS snapshots",
+      "parameters": {
+        "owner_id": {
+          "type": "string",
+          "description": "Owner ID or 'self' for your own snapshots",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "efs_list_filesystems",
+      "description": "List all EFS file systems",
+      "parameters": {}
+    },
+    {
+      "name": "efs_create_filesystem",
+      "description": "Create a new EFS file system",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "description": "Name tag for the file system"
+        }
+      }
+    },
+    {
+      "name": "efs_delete_filesystem",
+      "description": "Delete an EFS file system",
+      "parameters": {
+        "filesystem_id": {
+          "type": "string",
+          "description": "ID of the EFS file system to delete"
+        }
+      }
+    },
+    {
+      "name": "efs_create_mount_target",
+      "description": "Create a mount target for an EFS file system",
+      "parameters": {
+        "filesystem_id": {
+          "type": "string",
+          "description": "ID of the EFS file system"
+        },
+        "subnet_id": {
+          "type": "string",
+          "description": "ID of the subnet to create the mount target in"
+        },
+        "security_groups": {
+          "type": "array",
+          "description": "List of security group IDs"
+        }
+      }
+    },
+    {
+      "name": "efs_list_mount_targets",
+      "description": "List mount targets for an EFS file system",
+      "parameters": {
+        "filesystem_id": {
+          "type": "string",
+          "description": "ID of the EFS file system"
+        }
+      }
+    },
+    {
+      "name": "fsx_list_filesystems",
+      "description": "List all FSx file systems",
+      "parameters": {}
+    },
+    {
+      "name": "fsx_describe_filesystem",
+      "description": "Get details about an FSx file system",
+      "parameters": {
+        "filesystem_id": {
+          "type": "string",
+          "description": "ID of the FSx file system"
+        }
+      }
+    },
+    {
+      "name": "fsx_create_backup",
+      "description": "Create a backup of an FSx file system",
+      "parameters": {
+        "filesystem_id": {
+          "type": "string",
+          "description": "ID of the FSx file system"
+        },
+        "backup_name": {
+          "type": "string",
+          "description": "Name for the backup"
+        }
+      }
+    },
+    {
+      "name": "fsx_list_backups",
+      "description": "List all FSx backups",
+      "parameters": {}
+    },
+    {
+      "name": "storage_gateway_list_gateways",
+      "description": "List all Storage Gateways",
+      "parameters": {}
+    },
+    {
+      "name": "storage_gateway_list_volumes",
+      "description": "List Storage Gateway volumes",
+      "parameters": {
+        "gateway_id": {
+          "type": "string",
+          "description": "ID of the Storage Gateway"
+        }
+      }
+    },
+    {
+      "name": "storage_gateway_describe_gateway",
+      "description": "Get details about a Storage Gateway",
+      "parameters": {
+        "gateway_id": {
+          "type": "string",
+          "description": "ID of the Storage Gateway"
+        }
+      }
+    },
+    {
+      "name": "storage_gateway_list_file_shares",
+      "description": "List Storage Gateway file shares",
+      "parameters": {
+        "gateway_id": {
+          "type": "string",
+          "description": "ID of the Storage Gateway"
+        }
+      }
+    },
+    {
+      "name": "glacier_list_vaults",
+      "description": "List all Glacier vaults",
+      "parameters": {}
+    },
+    {
+      "name": "glacier_create_vault",
+      "description": "Create a new Glacier vault",
+      "parameters": {
+        "vault_name": {
+          "type": "string",
+          "description": "Name of the Glacier vault to create"
+        }
+      }
+    },
+    {
+      "name": "glacier_delete_vault",
+      "description": "Delete a Glacier vault",
+      "parameters": {
+        "vault_name": {
+          "type": "string",
+          "description": "Name of the Glacier vault to delete"
+        }
+      }
+    },
+    {
+      "name": "glacier_describe_vault",
+      "description": "Get details about a Glacier vault",
+      "parameters": {
+        "vault_name": {
+          "type": "string",
+          "description": "Name of the Glacier vault"
+        }
+      }
+    },
+    {
+      "name": "glacier_initiate_job",
+      "description": "Initiate a Glacier job",
+      "parameters": {
+        "vault_name": {
+          "type": "string",
+          "description": "Name of the Glacier vault"
+        },
+        "job_type": {
+          "type": "string",
+          "description": "Type of job to initiate (archive-retrieval, inventory-retrieval)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the job",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "glacier_list_jobs",
+      "description": "List Glacier jobs for a vault",
+      "parameters": {
+        "vault_name": {
+          "type": "string",
+          "description": "Name of the Glacier vault"
+        }
+      }
+    },
+    {
+      "name": "glacier_deep_archive_list_vaults",
+      "description": "List all S3 Glacier Deep Archive vaults",
+      "parameters": {}
+    },
+    {
+      "name": "snow_list_jobs",
+      "description": "List all Snow Family jobs",
+      "parameters": {}
+    },
+    {
+      "name": "snow_describe_job",
+      "description": "Get details about a Snow Family job",
+      "parameters": {
+        "job_id": {
+          "type": "string",
+          "description": "ID of the Snow Family job"
+        }
+      }
+    },
+    {
+      "name": "snow_list_clusters",
+      "description": "List all Snow Family clusters",
+      "parameters": {}
+    },
+    {
+      "name": "backup_list_backup_vaults",
+      "description": "List all AWS Backup vaults",
+      "parameters": {}
+    },
+    {
+      "name": "backup_list_backup_plans",
+      "description": "List all AWS Backup plans",
+      "parameters": {}
+    },
+    {
+      "name": "backup_list_recovery_points",
+      "description": "List recovery points in a backup vault",
+      "parameters": {
+        "backup_vault_name": {
+          "type": "string",
+          "description": "Name of the AWS Backup vault"
+        }
+      }
+    },
+    {
+      "name": "s3_object_lambda_list_access_points",
+      "description": "List all S3 Object Lambda Access Points",
+      "parameters": {}
+    }
+  ]
+}
