@@ -138,6 +138,16 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
                 action = tool_name
                 params = parameters
                 
+                # Check if the action is supported
+                supported_actions = self._get_supported_actions()
+                if action not in supported_actions:
+                    self._send_response(400, {
+                        "status": "error", 
+                        "message": f"Unsupported action: {action}. Please use one of the supported actions.",
+                        "supported_actions": supported_actions
+                    })
+                    return
+                
                 # Handle user confirmation for create operations
                 if 'confirmation' in params and params.get('confirmation', '').lower() == 'confirmed':
                     # User has confirmed the operation, proceed with original parameters
@@ -149,6 +159,16 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
                 # Original format
                 action = request.get('action')
                 params = request.get('params', {})
+                
+                # Check if the action is supported
+                supported_actions = self._get_supported_actions()
+                if action not in supported_actions:
+                    self._send_response(400, {
+                        "status": "error", 
+                        "message": f"Unsupported action: {action}. Please use one of the supported actions.",
+                        "supported_actions": supported_actions
+                    })
+                    return
                 
                 # Handle user confirmation for create operations
                 if 'confirmation' in params and params.get('confirmation', '').lower() == 'confirmed':
@@ -184,12 +204,24 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
                 result = self.s3_service.get_bucket_policy(params.get('bucket_name'))
             elif action == 's3_get_bucket_versioning':
                 result = self.s3_service.get_bucket_versioning(params.get('bucket_name'))
+            elif action == 's3_get_bucket_replication':
+                result = self.s3_service.get_bucket_replication(params.get('bucket_name'))
             elif action == 's3_get_object_acl':
                 result = self.s3_service.get_object_acl(params.get('bucket_name'), params.get('object_key'))
             elif action == 's3_create_bucket':
                 result = self.s3_service.create_bucket(params.get('bucket_name'))
             elif action == 's3_delete_bucket':
                 result = self.s3_service.delete_bucket(params.get('bucket_name'))
+            elif action == 's3_create_replication':
+                result = self.s3_service.create_replication(
+                    params.get('source_bucket'),
+                    params.get('destination_bucket'),
+                    params.get('destination_region'),
+                    params.get('prefix'),
+                    params.get('replication_type', 'CRR')
+                )
+            elif action == 's3_delete_replication':
+                result = self.s3_service.delete_replication(params.get('bucket_name'))
             
             # EBS operations
             elif action == 'ebs_list_volumes':
@@ -209,6 +241,11 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
                 )
             elif action == 'ebs_list_snapshots':
                 result = self.ebs_service.list_snapshots(params.get('owner_id', 'self'))
+            elif action == 'ebs_create_volume_replica':
+                result = self.ebs_service.create_volume_replica(
+                    params.get('source_volume_id'),
+                    params.get('destination_az')
+                )
             
             # EFS operations
             elif action == 'efs_list_filesystems':
@@ -225,6 +262,15 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
                 )
             elif action == 'efs_list_mount_targets':
                 result = self.efs_service.list_mount_targets(params.get('filesystem_id'))
+            elif action == 'efs_create_replication':
+                result = self.efs_service.create_replication(
+                    params.get('source_filesystem_id'),
+                    params.get('destination_region')
+                )
+            elif action == 'efs_delete_replication':
+                result = self.efs_service.delete_replication(params.get('filesystem_id'))
+            elif action == 'efs_describe_replication':
+                result = self.efs_service.describe_replication(params.get('filesystem_id'))
             
             # FSx operations
             elif action == 'fsx_list_filesystems':
@@ -238,6 +284,16 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
                 )
             elif action == 'fsx_list_backups':
                 result = self.fsx_service.list_backups()
+            elif action == 'fsx_create_replication':
+                result = self.fsx_service.create_replication(
+                    params.get('source_filesystem_id'),
+                    params.get('destination_region'),
+                    params.get('deployment_type')
+                )
+            elif action == 'fsx_delete_replication':
+                result = self.fsx_service.delete_replication(params.get('replica_filesystem_id'))
+            elif action == 'fsx_list_replicas':
+                result = self.fsx_service.list_replicas(params.get('source_filesystem_id'))
             
             # Storage Gateway operations
             elif action == 'storage_gateway_list_gateways':
@@ -248,6 +304,32 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
                 result = self.storage_gateway_service.describe_gateway(params.get('gateway_id'))
             elif action == 'storage_gateway_list_file_shares':
                 result = self.storage_gateway_service.list_file_shares(params.get('gateway_id'))
+            elif action == 'storage_gateway_create_nfs_file_share':
+                result = self.storage_gateway_service.create_nfs_file_share(
+                    params.get('gateway_id'),
+                    params.get('location_arn'),
+                    params.get('client_token'),
+                    params.get('role_arn'),
+                    params.get('name')
+                )
+            elif action == 'storage_gateway_create_smb_file_share':
+                result = self.storage_gateway_service.create_smb_file_share(
+                    params.get('gateway_id'),
+                    params.get('location_arn'),
+                    params.get('client_token'),
+                    params.get('role_arn'),
+                    params.get('name'),
+                    params.get('password')
+                )
+            elif action == 'storage_gateway_delete_file_share':
+                result = self.storage_gateway_service.delete_file_share(params.get('file_share_arn'))
+            elif action == 'storage_gateway_create_volume':
+                result = self.storage_gateway_service.create_volume(
+                    params.get('gateway_id'),
+                    params.get('target_name'),
+                    params.get('size_in_bytes'),
+                    params.get('volume_type', 'CACHED')
+                )
             
             # Glacier operations
             elif action == 'glacier_list_vaults':
@@ -319,3 +401,82 @@ if __name__ == "__main__":
         port = int(sys.argv[2])
     
     run_server(host, port)
+    def _get_supported_actions(self):
+        """Get a list of all supported actions"""
+        return [
+            # Base operations
+            'list_aws_profiles',
+            'set_profile',
+            
+            # S3 operations
+            's3_list_buckets',
+            's3_list_objects',
+            's3_get_bucket_location',
+            's3_get_bucket_policy',
+            's3_get_bucket_versioning',
+            's3_get_bucket_replication',
+            's3_get_object_acl',
+            's3_create_bucket',
+            's3_delete_bucket',
+            's3_create_replication',
+            's3_delete_replication',
+            
+            # EBS operations
+            'ebs_list_volumes',
+            'ebs_create_volume',
+            'ebs_delete_volume',
+            'ebs_create_snapshot',
+            'ebs_list_snapshots',
+            'ebs_create_volume_replica',
+            
+            # EFS operations
+            'efs_list_filesystems',
+            'efs_create_filesystem',
+            'efs_delete_filesystem',
+            'efs_create_mount_target',
+            'efs_list_mount_targets',
+            'efs_create_replication',
+            'efs_delete_replication',
+            'efs_describe_replication',
+            
+            # FSx operations
+            'fsx_list_filesystems',
+            'fsx_describe_filesystem',
+            'fsx_create_backup',
+            'fsx_list_backups',
+            'fsx_create_replication',
+            'fsx_delete_replication',
+            'fsx_list_replicas',
+            
+            # Storage Gateway operations
+            'storage_gateway_list_gateways',
+            'storage_gateway_list_volumes',
+            'storage_gateway_describe_gateway',
+            'storage_gateway_list_file_shares',
+            'storage_gateway_create_nfs_file_share',
+            'storage_gateway_create_smb_file_share',
+            'storage_gateway_delete_file_share',
+            'storage_gateway_create_volume',
+            
+            # Glacier operations
+            'glacier_list_vaults',
+            'glacier_create_vault',
+            'glacier_delete_vault',
+            'glacier_describe_vault',
+            'glacier_initiate_job',
+            'glacier_list_jobs',
+            'glacier_deep_archive_list_vaults',
+            
+            # Snow Family operations
+            'snow_list_jobs',
+            'snow_describe_job',
+            'snow_list_clusters',
+            
+            # AWS Backup operations
+            'backup_list_backup_vaults',
+            'backup_list_backup_plans',
+            'backup_list_recovery_points',
+            
+            # S3 Object Lambda operations
+            's3_object_lambda_list_access_points'
+        ]

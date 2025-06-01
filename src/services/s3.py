@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import logging
+import uuid
 from botocore.exceptions import ClientError
 from .base import BaseService
 
@@ -116,6 +117,213 @@ class S3Service(BaseService):
             logger.error(f"Error getting ACL for object {object_key} in bucket {bucket_name}: {e}")
             return {"status": "error", "message": str(e)}
     
+    def get_bucket_replication(self, bucket_name):
+        """Get replication configuration for an S3 bucket"""
+        try:
+            s3_client = self._get_client('s3')
+            response = s3_client.get_bucket_replication(Bucket=bucket_name)
+            return {"status": "success", "replication_config": response.get('ReplicationConfiguration', {})}
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ReplicationConfigurationNotFoundError':
+                return {"status": "success", "replication_config": None, "message": "No replication configuration exists for this bucket"}
+            logger.error(f"Error getting replication configuration for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def create_replication(self, source_bucket, destination_bucket, destination_region=None, prefix=None, replication_type="CRR"):
+        """
+        Create S3 bucket replication (Cross-Region or Same-Region)
+        
+        Args:
+            source_bucket (str): Source bucket name
+            destination_bucket (str): Destination bucket name
+            destination_region (str): Destination region (for CRR)
+            prefix (str): Optional prefix filter for objects to replicate
+            replication_type (str): Type of replication - "CRR" (Cross-Region) or "SRR" (Same-Region)
+        """
+        # Request confirmation before creating replication
+        params = {
+            "source_bucket": source_bucket,
+            "destination_bucket": destination_bucket,
+            "replication_type": replication_type
+        }
+        
+        if destination_region:
+            params["destination_region"] = destination_region
+        if prefix:
+            params["prefix"] = prefix
+            
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="S3 bucket replication",
+            params=params
+        )
+        
+        if confirmation:
+            return confirmation
+            
+        try:
+            s3_client = self._get_client('s3')
+            
+            # Get source bucket location
+            source_location_response = s3_client.get_bucket_location(Bucket=source_bucket)
+            source_region = source_location_response.get('LocationConstraint') or 'us-east-1'
+            
+            # Determine destination region
+            if not destination_region:
+                if replication_type == "CRR":
+                    # For CRR, use a different region than source
+                    destination_region = 'us-west-2' if source_region != 'us-west-2' else 'us-east-1'
+                else:
+                    # For SRR, use the same region as source
+                    destination_region = source_region
+            
+            # Enable versioning on source bucket (required for replication)
+            s3_client.put_bucket_versioning(
+                Bucket=source_bucket,
+                VersioningConfiguration={'Status': 'Enabled'}
+            )
+            
+            # Enable versioning on destination bucket (required for replication)
+            dest_s3_client = self._get_client('s3') if destination_region == source_region else boto3.client(
+                's3', 
+                region_name=destination_region,
+                aws_access_key_id=s3_client._request_signer._credentials.access_key,
+                aws_secret_access_key=s3_client._request_signer._credentials.secret_key,
+                aws_session_token=s3_client._request_signer._credentials.token
+            )
+            
+            dest_s3_client.put_bucket_versioning(
+                Bucket=destination_bucket,
+                VersioningConfiguration={'Status': 'Enabled'}
+            )
+            
+            # Create IAM role for replication
+            role_name = f"s3-replication-role-{uuid.uuid4().hex[:8]}"
+            iam_client = self._get_client('iam')
+            
+            # Create trust policy for S3 service
+            trust_policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {"Service": "s3.amazonaws.com"},
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            }
+            
+            # Create the IAM role
+            role_response = iam_client.create_role(
+                RoleName=role_name,
+                AssumeRolePolicyDocument=json.dumps(trust_policy)
+            )
+            
+            role_arn = role_response['Role']['Arn']
+            
+            # Create policy document for replication permissions
+            policy_document = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetReplicationConfiguration",
+                            "s3:ListBucket"
+                        ],
+                        "Resource": [
+                            f"arn:aws:s3:::{source_bucket}"
+                        ]
+                    },
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetObjectVersion",
+                            "s3:GetObjectVersionAcl"
+                        ],
+                        "Resource": [
+                            f"arn:aws:s3:::{source_bucket}/*"
+                        ]
+                    },
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:ReplicateObject",
+                            "s3:ReplicateDelete"
+                        ],
+                        "Resource": f"arn:aws:s3:::{destination_bucket}/*"
+                    }
+                ]
+            }
+            
+            # Attach policy to role
+            policy_name = f"s3-replication-policy-{uuid.uuid4().hex[:8]}"
+            policy_response = iam_client.create_policy(
+                PolicyName=policy_name,
+                PolicyDocument=json.dumps(policy_document)
+            )
+            
+            policy_arn = policy_response['Policy']['Arn']
+            
+            iam_client.attach_role_policy(
+                RoleName=role_name,
+                PolicyArn=policy_arn
+            )
+            
+            # Create replication configuration
+            replication_config = {
+                'Role': role_arn,
+                'Rules': [
+                    {
+                        'ID': f"{replication_type}-{uuid.uuid4().hex[:8]}",
+                        'Status': 'Enabled',
+                        'Destination': {
+                            'Bucket': f"arn:aws:s3:::{destination_bucket}"
+                        }
+                    }
+                ]
+            }
+            
+            # Add prefix filter if specified
+            if prefix:
+                replication_config['Rules'][0]['Filter'] = {
+                    'Prefix': prefix
+                }
+            
+            # Wait for IAM role to propagate
+            import time
+            time.sleep(10)
+            
+            # Apply replication configuration
+            s3_client.put_bucket_replication(
+                Bucket=source_bucket,
+                ReplicationConfiguration=replication_config
+            )
+            
+            return {
+                "status": "success",
+                "message": f"{replication_type} replication configured from {source_bucket} to {destination_bucket}",
+                "details": {
+                    "source_bucket": source_bucket,
+                    "destination_bucket": destination_bucket,
+                    "destination_region": destination_region,
+                    "replication_role": role_arn
+                }
+            }
+            
+        except ClientError as e:
+            logger.error(f"Error creating {replication_type} replication for bucket {source_bucket}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def delete_replication(self, bucket_name):
+        """Delete replication configuration from an S3 bucket"""
+        try:
+            s3_client = self._get_client('s3')
+            s3_client.delete_bucket_replication(Bucket=bucket_name)
+            return {"status": "success", "message": f"Replication configuration deleted from bucket {bucket_name}"}
+        except ClientError as e:
+            logger.error(f"Error deleting replication configuration for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
     def get_bucket_versioning(self, bucket_name):
         """Get versioning status for an S3 bucket"""
         try:

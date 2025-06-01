@@ -124,3 +124,97 @@ class EBSService(BaseService):
         except ClientError as e:
             logger.error(f"Error listing EBS snapshots: {e}")
             return {"status": "error", "message": str(e)}
+    def create_volume_replica(self, source_volume_id, destination_az=None):
+        """
+        Create a replica of an EBS volume in a different Availability Zone
+        
+        Args:
+            source_volume_id (str): ID of the source volume to replicate
+            destination_az (str): Destination Availability Zone (if None, a different AZ will be selected)
+        """
+        # Request confirmation before creating the volume replica
+        params = {
+            "source_volume_id": source_volume_id
+        }
+        
+        if destination_az:
+            params["destination_az"] = destination_az
+            
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="EBS volume replica",
+            params=params
+        )
+        
+        if confirmation:
+            return confirmation
+            
+        try:
+            ec2_client = self._get_client('ec2')
+            
+            # Get source volume details
+            source_volume = ec2_client.describe_volumes(VolumeIds=[source_volume_id])['Volumes'][0]
+            source_az = source_volume['AvailabilityZone']
+            source_size = source_volume['Size']
+            source_type = source_volume['VolumeType']
+            source_encrypted = source_volume['Encrypted']
+            
+            # If no destination AZ provided, select a different one
+            if not destination_az:
+                azs = ec2_client.describe_availability_zones()['AvailabilityZones']
+                available_azs = [az['ZoneName'] for az in azs if az['ZoneName'] != source_az]
+                if not available_azs:
+                    return {"status": "error", "message": "No alternative Availability Zones available"}
+                destination_az = available_azs[0]
+            
+            # Create a snapshot of the source volume
+            snapshot_response = ec2_client.create_snapshot(
+                VolumeId=source_volume_id,
+                Description=f"Snapshot for volume replica of {source_volume_id}"
+            )
+            
+            snapshot_id = snapshot_response['SnapshotId']
+            
+            # Wait for the snapshot to complete
+            waiter = ec2_client.get_waiter('snapshot_completed')
+            waiter.wait(SnapshotIds=[snapshot_id])
+            
+            # Create a new volume from the snapshot in the destination AZ
+            volume_params = {
+                'SnapshotId': snapshot_id,
+                'AvailabilityZone': destination_az,
+                'VolumeType': source_type,
+                'Encrypted': source_encrypted
+            }
+            
+            # Add IOPS if needed for io1/io2 volume types
+            if source_type in ['io1', 'io2'] and 'Iops' in source_volume:
+                volume_params['Iops'] = source_volume['Iops']
+            
+            # Add throughput if needed for gp3 volume type
+            if source_type == 'gp3' and 'Throughput' in source_volume:
+                volume_params['Throughput'] = source_volume['Throughput']
+            
+            # Create the replica volume
+            replica_response = ec2_client.create_volume(**volume_params)
+            
+            # Add tags to the replica volume
+            ec2_client.create_tags(
+                Resources=[replica_response['VolumeId']],
+                Tags=[
+                    {'Key': 'ReplicaOf', 'Value': source_volume_id},
+                    {'Key': 'Name', 'Value': f"Replica-{source_volume_id}"}
+                ]
+            )
+            
+            return {
+                "status": "success",
+                "source_volume_id": source_volume_id,
+                "replica_volume_id": replica_response['VolumeId'],
+                "snapshot_id": snapshot_id,
+                "destination_az": destination_az,
+                "message": f"Volume replica {replica_response['VolumeId']} created successfully"
+            }
+        except ClientError as e:
+            logger.error(f"Error creating EBS volume replica for {source_volume_id}: {e}")
+            return {"status": "error", "message": str(e)}
