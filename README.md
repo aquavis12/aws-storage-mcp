@@ -48,8 +48,8 @@ This AWS Storage MCP server connects Amazon Q to your AWS storage services, allo
 
 ## Quick Start
 
-*For detailed installation instructions, please refer to the [Installation Guide](docs/INSTALLATION.md).
-*For detailed usage examples, please refer to the [Usage Guide](docs/USAGE.md).
+- **For detailed installation instructions, please refer to the [Installation Guide](docs/INSTALLATION.md).
+- **For detailed usage examples, please refer to the [Usage Guide](docs/USAGE.md).
 
 ## Troubleshooting
 
