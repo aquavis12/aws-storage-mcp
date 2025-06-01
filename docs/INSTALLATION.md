@@ -68,7 +68,7 @@ Follow the installation instructions for Amazon Q CLI from the [official documen
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/aws-storage-mcp.git
+git clone https://github.com/aquavis12/aws-storage-mcp.git
 cd aws-storage-mcp
 ```
 

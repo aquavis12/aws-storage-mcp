@@ -52,7 +52,7 @@ For detailed installation instructions, please refer to the [Installation Guide]
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/aws-storage-mcp.git
+   git clone https://github.com/aquavis12/aws-storage-mcp.git
    cd aws-storage-mcp
    ```
 
