@@ -13,7 +13,7 @@ First stable release of AWS Storage MCP Server with S3 object-level operations.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/aws-storage-mcp.git
+git clone https://github.com/aquavis12/aws-storage-mcp.git
 cd aws-storage-mcp
 
 # Start the server
