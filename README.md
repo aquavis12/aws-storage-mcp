@@ -38,6 +38,7 @@ This AWS Storage MCP server connects Amazon Q to your AWS storage services, allo
 4. **Manage multiple storage services** from a single interface
 
 ## Architecture Diagram
+The AWS Storage MCP server follows a modular architecture that enables natural language interactions with AWS storage services:
 ![](/docs/arch.drawio.png)
 
 ## Supported AWS Storage Services
@@ -61,17 +62,9 @@ This AWS Storage MCP server connects Amazon Q to your AWS storage services, allo
 
 ## Quick Start
 
-- **For detailed installation instructions, please refer to the [Installation Guide](docs/INSTALLATION.md).
-- **For detailed usage examples, please refer to the [Usage Guide](docs/USAGE.md).
+- **For detailed installation instructions, please refer to the [Installation Guide](docs/INSTALLATION.md).**
+- **For detailed usage examples, please refer to the [Usage Guide](docs/USAGE.md).**
 - **For practical examples and demonstrations, see the [Examples Guide](docs/EXAMPLES.md).**
-
-## Architecture
-
-The AWS Storage MCP server follows a modular architecture that enables natural language interactions with AWS storage services:
-
-![AWS Storage MCP Architecture](docs/aws-storage-mcp-architecture.drawio)
-
-For a detailed view of the architecture, open the diagram file in [draw.io](https://app.diagrams.net/).
 
 ## Troubleshooting
 
