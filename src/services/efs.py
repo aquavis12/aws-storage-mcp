@@ -242,3 +242,74 @@ class EFSService(BaseService):
         except ClientError as e:
             logger.error(f"Error describing EFS replication for {filesystem_id}: {e}")
             return {"status": "error", "message": str(e)}
+    def put_lifecycle_configuration(self, filesystem_id, lifecycle_policies):
+        """
+        Configure lifecycle policies for an EFS file system
+        
+        Args:
+            filesystem_id (str): ID of the EFS file system
+            lifecycle_policies (list): List of lifecycle policies
+        """
+        # Request confirmation before setting lifecycle policies
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="EFS lifecycle configuration",
+            params={
+                "filesystem_id": filesystem_id,
+                "policies_count": len(lifecycle_policies)
+            }
+        )
+        
+        if confirmation:
+            return confirmation
+            
+        try:
+            efs_client = self._get_client('efs')
+            
+            response = efs_client.put_lifecycle_configuration(
+                FileSystemId=filesystem_id,
+                LifecyclePolicies=lifecycle_policies
+            )
+            
+            return {
+                "status": "success",
+                "message": f"Lifecycle configuration applied to EFS file system {filesystem_id} successfully"
+            }
+        except ClientError as e:
+            logger.error(f"Error setting lifecycle configuration for EFS file system {filesystem_id}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def describe_lifecycle_configuration(self, filesystem_id):
+        """Get lifecycle configuration for an EFS file system"""
+        try:
+            efs_client = self._get_client('efs')
+            response = efs_client.describe_lifecycle_configuration(FileSystemId=filesystem_id)
+            
+            return {
+                "status": "success", 
+                "lifecycle_policies": response.get('LifecyclePolicies', [])
+            }
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'LifecycleConfigurationNotFound':
+                return {"status": "success", "lifecycle_policies": [], "message": "No lifecycle configuration exists for this file system"}
+            logger.error(f"Error getting lifecycle configuration for EFS file system {filesystem_id}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def delete_lifecycle_configuration(self, filesystem_id):
+        """Delete lifecycle configuration from an EFS file system"""
+        try:
+            efs_client = self._get_client('efs')
+            
+            # To delete lifecycle configuration, set an empty list of policies
+            efs_client.put_lifecycle_configuration(
+                FileSystemId=filesystem_id,
+                LifecyclePolicies=[]
+            )
+            
+            return {
+                "status": "success",
+                "message": f"Lifecycle configuration deleted from EFS file system {filesystem_id} successfully"
+            }
+        except ClientError as e:
+            logger.error(f"Error deleting lifecycle configuration for EFS file system {filesystem_id}: {e}")
+            return {"status": "error", "message": str(e)}

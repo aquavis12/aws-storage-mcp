@@ -222,6 +222,50 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
                 )
             elif action == 's3_delete_replication':
                 result = self.s3_service.delete_replication(params.get('bucket_name'))
+            elif action == 's3_put_bucket_lifecycle_configuration':
+                result = self.s3_service.put_bucket_lifecycle_configuration(
+                    params.get('bucket_name'),
+                    params.get('lifecycle_rules')
+                )
+            elif action == 's3_get_bucket_lifecycle_configuration':
+                result = self.s3_service.get_bucket_lifecycle_configuration(params.get('bucket_name'))
+            elif action == 's3_delete_bucket_lifecycle_configuration':
+                result = self.s3_service.delete_bucket_lifecycle_configuration(params.get('bucket_name'))
+            elif action == 's3_put_bucket_policy':
+                result = self.s3_service.put_bucket_policy(
+                    params.get('bucket_name'),
+                    params.get('policy')
+                )
+            elif action == 's3_delete_bucket_policy':
+                result = self.s3_service.delete_bucket_policy(params.get('bucket_name'))
+            elif action == 's3_put_public_access_block':
+                result = self.s3_service.put_public_access_block(
+                    params.get('bucket_name'),
+                    params.get('block_public_acls', True),
+                    params.get('ignore_public_acls', True),
+                    params.get('block_public_policy', True),
+                    params.get('restrict_public_buckets', True)
+                )
+            elif action == 's3_get_public_access_block':
+                result = self.s3_service.get_public_access_block(params.get('bucket_name'))
+            elif action == 's3_delete_public_access_block':
+                result = self.s3_service.delete_public_access_block(params.get('bucket_name'))
+            elif action == 's3_put_bucket_website':
+                result = self.s3_service.put_bucket_website(
+                    params.get('bucket_name'),
+                    params.get('index_document'),
+                    params.get('error_document'),
+                    params.get('redirect_all_requests_to')
+                )
+            elif action == 's3_get_bucket_website':
+                result = self.s3_service.get_bucket_website(params.get('bucket_name'))
+            elif action == 's3_delete_bucket_website':
+                result = self.s3_service.delete_bucket_website(params.get('bucket_name'))
+            elif action == 's3_put_bucket_acl':
+                result = self.s3_service.put_bucket_acl(
+                    params.get('bucket_name'),
+                    params.get('acl', 'private')
+                )
             
             # EBS operations
             elif action == 'ebs_list_volumes':
@@ -271,6 +315,15 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
                 result = self.efs_service.delete_replication(params.get('filesystem_id'))
             elif action == 'efs_describe_replication':
                 result = self.efs_service.describe_replication(params.get('filesystem_id'))
+            elif action == 'efs_put_lifecycle_configuration':
+                result = self.efs_service.put_lifecycle_configuration(
+                    params.get('filesystem_id'),
+                    params.get('lifecycle_policies')
+                )
+            elif action == 'efs_describe_lifecycle_configuration':
+                result = self.efs_service.describe_lifecycle_configuration(params.get('filesystem_id'))
+            elif action == 'efs_delete_lifecycle_configuration':
+                result = self.efs_service.delete_lifecycle_configuration(params.get('filesystem_id'))
             
             # FSx operations
             elif action == 'fsx_list_filesystems':
@@ -366,6 +419,33 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
                 result = self.backup_service.list_backup_plans()
             elif action == 'backup_list_recovery_points':
                 result = self.backup_service.list_recovery_points(params.get('backup_vault_name'))
+            elif action == 'backup_create_backup_vault':
+                result = self.backup_service.create_backup_vault(
+                    params.get('vault_name'),
+                    params.get('encryption_key_arn'),
+                    params.get('tags')
+                )
+            elif action == 'backup_delete_backup_vault':
+                result = self.backup_service.delete_backup_vault(params.get('vault_name'))
+            elif action == 'backup_create_backup_plan':
+                result = self.backup_service.create_backup_plan(
+                    params.get('plan_name'),
+                    params.get('backup_rules')
+                )
+            elif action == 'backup_delete_backup_plan':
+                result = self.backup_service.delete_backup_plan(params.get('plan_id'))
+            elif action == 'backup_create_backup_selection':
+                result = self.backup_service.create_backup_selection(
+                    params.get('plan_id'),
+                    params.get('selection_name'),
+                    params.get('resources'),
+                    params.get('iam_role_arn')
+                )
+            elif action == 'backup_delete_backup_selection':
+                result = self.backup_service.delete_backup_selection(
+                    params.get('plan_id'),
+                    params.get('selection_id')
+                )
             
             # S3 Object Lambda operations
             elif action == 's3_object_lambda_list_access_points':
@@ -420,6 +500,18 @@ if __name__ == "__main__":
             's3_delete_bucket',
             's3_create_replication',
             's3_delete_replication',
+            's3_put_bucket_lifecycle_configuration',
+            's3_get_bucket_lifecycle_configuration',
+            's3_delete_bucket_lifecycle_configuration',
+            's3_put_bucket_policy',
+            's3_delete_bucket_policy',
+            's3_put_public_access_block',
+            's3_get_public_access_block',
+            's3_delete_public_access_block',
+            's3_put_bucket_website',
+            's3_get_bucket_website',
+            's3_delete_bucket_website',
+            's3_put_bucket_acl',
             
             # EBS operations
             'ebs_list_volumes',
@@ -438,6 +530,9 @@ if __name__ == "__main__":
             'efs_create_replication',
             'efs_delete_replication',
             'efs_describe_replication',
+            'efs_put_lifecycle_configuration',
+            'efs_describe_lifecycle_configuration',
+            'efs_delete_lifecycle_configuration',
             
             # FSx operations
             'fsx_list_filesystems',
@@ -476,6 +571,12 @@ if __name__ == "__main__":
             'backup_list_backup_vaults',
             'backup_list_backup_plans',
             'backup_list_recovery_points',
+            'backup_create_backup_vault',
+            'backup_delete_backup_vault',
+            'backup_create_backup_plan',
+            'backup_delete_backup_plan',
+            'backup_create_backup_selection',
+            'backup_delete_backup_selection',
             
             # S3 Object Lambda operations
             's3_object_lambda_list_access_points'

@@ -334,3 +334,315 @@ class S3Service(BaseService):
         except ClientError as e:
             logger.error(f"Error getting versioning for bucket {bucket_name}: {e}")
             return {"status": "error", "message": str(e)}
+    def put_bucket_lifecycle_configuration(self, bucket_name, lifecycle_rules):
+        """
+        Add or update lifecycle configuration for an S3 bucket
+        
+        Args:
+            bucket_name (str): Name of the S3 bucket
+            lifecycle_rules (list): List of lifecycle rules
+        """
+        # Request confirmation before setting lifecycle configuration
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="S3 bucket lifecycle configuration",
+            params={
+                "bucket_name": bucket_name,
+                "rules_count": len(lifecycle_rules)
+            }
+        )
+        
+        if confirmation:
+            return confirmation
+            
+        try:
+            s3_client = self._get_client('s3')
+            
+            # Format the lifecycle configuration
+            lifecycle_config = {
+                'Rules': lifecycle_rules
+            }
+            
+            s3_client.put_bucket_lifecycle_configuration(
+                Bucket=bucket_name,
+                LifecycleConfiguration=lifecycle_config
+            )
+            
+            return {
+                "status": "success",
+                "message": f"Lifecycle configuration applied to bucket {bucket_name} successfully"
+            }
+        except ClientError as e:
+            logger.error(f"Error setting lifecycle configuration for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def get_bucket_lifecycle_configuration(self, bucket_name):
+        """Get lifecycle configuration for an S3 bucket"""
+        try:
+            s3_client = self._get_client('s3')
+            response = s3_client.get_bucket_lifecycle_configuration(Bucket=bucket_name)
+            return {"status": "success", "lifecycle_configuration": response.get('Rules', [])}
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchLifecycleConfiguration':
+                return {"status": "success", "lifecycle_configuration": [], "message": "No lifecycle configuration exists for this bucket"}
+            logger.error(f"Error getting lifecycle configuration for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def delete_bucket_lifecycle_configuration(self, bucket_name):
+        """Delete lifecycle configuration from an S3 bucket"""
+        try:
+            s3_client = self._get_client('s3')
+            s3_client.delete_bucket_lifecycle(Bucket=bucket_name)
+            return {"status": "success", "message": f"Lifecycle configuration deleted from bucket {bucket_name}"}
+        except ClientError as e:
+            logger.error(f"Error deleting lifecycle configuration for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def put_bucket_policy(self, bucket_name, policy):
+        """
+        Add or update policy for an S3 bucket
+        
+        Args:
+            bucket_name (str): Name of the S3 bucket
+            policy (dict): Bucket policy document
+        """
+        # Request confirmation before setting bucket policy
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="S3 bucket policy",
+            params={
+                "bucket_name": bucket_name
+            }
+        )
+        
+        if confirmation:
+            return confirmation
+            
+        try:
+            s3_client = self._get_client('s3')
+            
+            # Convert policy dict to JSON string
+            policy_str = json.dumps(policy)
+            
+            s3_client.put_bucket_policy(
+                Bucket=bucket_name,
+                Policy=policy_str
+            )
+            
+            return {
+                "status": "success",
+                "message": f"Policy applied to bucket {bucket_name} successfully"
+            }
+        except ClientError as e:
+            logger.error(f"Error setting policy for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def delete_bucket_policy(self, bucket_name):
+        """Delete policy from an S3 bucket"""
+        try:
+            s3_client = self._get_client('s3')
+            s3_client.delete_bucket_policy(Bucket=bucket_name)
+            return {"status": "success", "message": f"Policy deleted from bucket {bucket_name}"}
+        except ClientError as e:
+            logger.error(f"Error deleting policy for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def put_public_access_block(self, bucket_name, block_public_acls=True, ignore_public_acls=True, 
+                               block_public_policy=True, restrict_public_buckets=True):
+        """
+        Configure block public access settings for an S3 bucket
+        
+        Args:
+            bucket_name (str): Name of the S3 bucket
+            block_public_acls (bool): Block public ACLs
+            ignore_public_acls (bool): Ignore public ACLs
+            block_public_policy (bool): Block public policy
+            restrict_public_buckets (bool): Restrict public buckets
+        """
+        # Request confirmation before setting public access block
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="S3 public access block",
+            params={
+                "bucket_name": bucket_name,
+                "block_public_acls": block_public_acls,
+                "ignore_public_acls": ignore_public_acls,
+                "block_public_policy": block_public_policy,
+                "restrict_public_buckets": restrict_public_buckets
+            }
+        )
+        
+        if confirmation:
+            return confirmation
+            
+        try:
+            s3_client = self._get_client('s3')
+            
+            s3_client.put_public_access_block(
+                Bucket=bucket_name,
+                PublicAccessBlockConfiguration={
+                    'BlockPublicAcls': block_public_acls,
+                    'IgnorePublicAcls': ignore_public_acls,
+                    'BlockPublicPolicy': block_public_policy,
+                    'RestrictPublicBuckets': restrict_public_buckets
+                }
+            )
+            
+            return {
+                "status": "success",
+                "message": f"Public access block settings applied to bucket {bucket_name} successfully"
+            }
+        except ClientError as e:
+            logger.error(f"Error setting public access block for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def get_public_access_block(self, bucket_name):
+        """Get block public access settings for an S3 bucket"""
+        try:
+            s3_client = self._get_client('s3')
+            response = s3_client.get_public_access_block(Bucket=bucket_name)
+            return {
+                "status": "success", 
+                "public_access_block": response.get('PublicAccessBlockConfiguration', {})
+            }
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchPublicAccessBlockConfiguration':
+                return {"status": "success", "public_access_block": None, "message": "No public access block configuration exists for this bucket"}
+            logger.error(f"Error getting public access block for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def delete_public_access_block(self, bucket_name):
+        """Delete block public access settings from an S3 bucket"""
+        try:
+            s3_client = self._get_client('s3')
+            s3_client.delete_public_access_block(Bucket=bucket_name)
+            return {"status": "success", "message": f"Public access block settings deleted from bucket {bucket_name}"}
+        except ClientError as e:
+            logger.error(f"Error deleting public access block for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def put_bucket_website(self, bucket_name, index_document, error_document=None, redirect_all_requests_to=None):
+        """
+        Configure static website hosting for an S3 bucket
+        
+        Args:
+            bucket_name (str): Name of the S3 bucket
+            index_document (str): Index document suffix (e.g., 'index.html')
+            error_document (str): Error document key (e.g., 'error.html')
+            redirect_all_requests_to (dict): Redirect configuration
+        """
+        # Request confirmation before setting website configuration
+        params = {
+            "bucket_name": bucket_name,
+            "index_document": index_document
+        }
+        if error_document:
+            params["error_document"] = error_document
+        if redirect_all_requests_to:
+            params["redirect_all_requests_to"] = redirect_all_requests_to
+            
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="S3 website configuration",
+            params=params
+        )
+        
+        if confirmation:
+            return confirmation
+            
+        try:
+            s3_client = self._get_client('s3')
+            
+            website_config = {}
+            
+            if redirect_all_requests_to:
+                website_config['RedirectAllRequestsTo'] = redirect_all_requests_to
+            else:
+                website_config['IndexDocument'] = {'Suffix': index_document}
+                if error_document:
+                    website_config['ErrorDocument'] = {'Key': error_document}
+            
+            s3_client.put_bucket_website(
+                Bucket=bucket_name,
+                WebsiteConfiguration=website_config
+            )
+            
+            # Get the website endpoint
+            region = self.get_bucket_location(bucket_name).get('location')
+            if region == 'us-east-1':
+                website_endpoint = f"http://{bucket_name}.s3-website-{region}.amazonaws.com"
+            else:
+                website_endpoint = f"http://{bucket_name}.s3-website.{region}.amazonaws.com"
+            
+            return {
+                "status": "success",
+                "message": f"Website configuration applied to bucket {bucket_name} successfully",
+                "website_endpoint": website_endpoint
+            }
+        except ClientError as e:
+            logger.error(f"Error setting website configuration for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def get_bucket_website(self, bucket_name):
+        """Get website configuration for an S3 bucket"""
+        try:
+            s3_client = self._get_client('s3')
+            response = s3_client.get_bucket_website(Bucket=bucket_name)
+            
+            # Remove ResponseMetadata
+            if 'ResponseMetadata' in response:
+                del response['ResponseMetadata']
+                
+            return {"status": "success", "website_configuration": response}
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchWebsiteConfiguration':
+                return {"status": "success", "website_configuration": None, "message": "No website configuration exists for this bucket"}
+            logger.error(f"Error getting website configuration for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def delete_bucket_website(self, bucket_name):
+        """Delete website configuration from an S3 bucket"""
+        try:
+            s3_client = self._get_client('s3')
+            s3_client.delete_bucket_website(Bucket=bucket_name)
+            return {"status": "success", "message": f"Website configuration deleted from bucket {bucket_name}"}
+        except ClientError as e:
+            logger.error(f"Error deleting website configuration for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def put_bucket_acl(self, bucket_name, acl='private'):
+        """
+        Set the access control list (ACL) for an S3 bucket
+        
+        Args:
+            bucket_name (str): Name of the S3 bucket
+            acl (str): Canned ACL to apply (private, public-read, public-read-write, etc.)
+        """
+        # Request confirmation before setting bucket ACL
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="S3 bucket ACL",
+            params={
+                "bucket_name": bucket_name,
+                "acl": acl
+            }
+        )
+        
+        if confirmation:
+            return confirmation
+            
+        try:
+            s3_client = self._get_client('s3')
+            
+            s3_client.put_bucket_acl(
+                Bucket=bucket_name,
+                ACL=acl
+            )
+            
+            return {
+                "status": "success",
+                "message": f"ACL '{acl}' applied to bucket {bucket_name} successfully"
+            }
+        except ClientError as e:
+            logger.error(f"Error setting ACL for bucket {bucket_name}: {e}")
+            return {"status": "error", "message": str(e)}

@@ -676,3 +676,342 @@
         }
       }
     }
+,
+    {
+      "name": "s3_put_bucket_lifecycle_configuration",
+      "description": "Add or update lifecycle configuration for an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        },
+        "lifecycle_rules": {
+          "type": "array",
+          "description": "List of lifecycle rules"
+        },
+        "confirmation": {
+          "type": "string",
+          "description": "Confirmation to proceed with creation",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "s3_get_bucket_lifecycle_configuration",
+      "description": "Get lifecycle configuration for an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        }
+      }
+    },
+    {
+      "name": "s3_delete_bucket_lifecycle_configuration",
+      "description": "Delete lifecycle configuration from an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        }
+      }
+    },
+    {
+      "name": "s3_put_bucket_policy",
+      "description": "Add or update policy for an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        },
+        "policy": {
+          "type": "object",
+          "description": "Bucket policy document"
+        },
+        "confirmation": {
+          "type": "string",
+          "description": "Confirmation to proceed with creation",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "s3_delete_bucket_policy",
+      "description": "Delete policy from an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        }
+      }
+    },
+    {
+      "name": "s3_put_public_access_block",
+      "description": "Configure block public access settings for an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        },
+        "block_public_acls": {
+          "type": "boolean",
+          "description": "Block public ACLs",
+          "required": false
+        },
+        "ignore_public_acls": {
+          "type": "boolean",
+          "description": "Ignore public ACLs",
+          "required": false
+        },
+        "block_public_policy": {
+          "type": "boolean",
+          "description": "Block public policy",
+          "required": false
+        },
+        "restrict_public_buckets": {
+          "type": "boolean",
+          "description": "Restrict public buckets",
+          "required": false
+        },
+        "confirmation": {
+          "type": "string",
+          "description": "Confirmation to proceed with creation",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "s3_get_public_access_block",
+      "description": "Get block public access settings for an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        }
+      }
+    },
+    {
+      "name": "s3_delete_public_access_block",
+      "description": "Delete block public access settings from an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        }
+      }
+    },
+    {
+      "name": "s3_put_bucket_website",
+      "description": "Configure static website hosting for an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        },
+        "index_document": {
+          "type": "string",
+          "description": "Index document suffix (e.g., 'index.html')"
+        },
+        "error_document": {
+          "type": "string",
+          "description": "Error document key (e.g., 'error.html')",
+          "required": false
+        },
+        "redirect_all_requests_to": {
+          "type": "object",
+          "description": "Redirect configuration",
+          "required": false
+        },
+        "confirmation": {
+          "type": "string",
+          "description": "Confirmation to proceed with creation",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "s3_get_bucket_website",
+      "description": "Get website configuration for an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        }
+      }
+    },
+    {
+      "name": "s3_delete_bucket_website",
+      "description": "Delete website configuration from an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        }
+      }
+    },
+    {
+      "name": "s3_put_bucket_acl",
+      "description": "Set the access control list (ACL) for an S3 bucket",
+      "parameters": {
+        "bucket_name": {
+          "type": "string",
+          "description": "Name of the S3 bucket"
+        },
+        "acl": {
+          "type": "string",
+          "description": "Canned ACL to apply (private, public-read, public-read-write, etc.)",
+          "required": false
+        },
+        "confirmation": {
+          "type": "string",
+          "description": "Confirmation to proceed with creation",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "backup_create_backup_vault",
+      "description": "Create a new AWS Backup vault",
+      "parameters": {
+        "vault_name": {
+          "type": "string",
+          "description": "Name of the backup vault"
+        },
+        "encryption_key_arn": {
+          "type": "string",
+          "description": "ARN of the KMS key for encryption",
+          "required": false
+        },
+        "tags": {
+          "type": "object",
+          "description": "Tags to apply to the backup vault",
+          "required": false
+        },
+        "confirmation": {
+          "type": "string",
+          "description": "Confirmation to proceed with creation",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "backup_delete_backup_vault",
+      "description": "Delete an AWS Backup vault",
+      "parameters": {
+        "vault_name": {
+          "type": "string",
+          "description": "Name of the backup vault to delete"
+        }
+      }
+    },
+    {
+      "name": "backup_create_backup_plan",
+      "description": "Create a new AWS Backup plan",
+      "parameters": {
+        "plan_name": {
+          "type": "string",
+          "description": "Name of the backup plan"
+        },
+        "backup_rules": {
+          "type": "array",
+          "description": "List of backup rules"
+        },
+        "confirmation": {
+          "type": "string",
+          "description": "Confirmation to proceed with creation",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "backup_delete_backup_plan",
+      "description": "Delete an AWS Backup plan",
+      "parameters": {
+        "plan_id": {
+          "type": "string",
+          "description": "ID of the backup plan to delete"
+        }
+      }
+    },
+    {
+      "name": "backup_create_backup_selection",
+      "description": "Create a resource selection for an AWS Backup plan",
+      "parameters": {
+        "plan_id": {
+          "type": "string",
+          "description": "ID of the backup plan"
+        },
+        "selection_name": {
+          "type": "string",
+          "description": "Name of the selection"
+        },
+        "resources": {
+          "type": "array",
+          "description": "List of resource ARNs to back up"
+        },
+        "iam_role_arn": {
+          "type": "string",
+          "description": "ARN of the IAM role for AWS Backup",
+          "required": false
+        },
+        "confirmation": {
+          "type": "string",
+          "description": "Confirmation to proceed with creation",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "backup_delete_backup_selection",
+      "description": "Delete a resource selection from an AWS Backup plan",
+      "parameters": {
+        "plan_id": {
+          "type": "string",
+          "description": "ID of the backup plan"
+        },
+        "selection_id": {
+          "type": "string",
+          "description": "ID of the selection to delete"
+        }
+      }
+    }
+,
+    {
+      "name": "efs_put_lifecycle_configuration",
+      "description": "Configure lifecycle policies for an EFS file system",
+      "parameters": {
+        "filesystem_id": {
+          "type": "string",
+          "description": "ID of the EFS file system"
+        },
+        "lifecycle_policies": {
+          "type": "array",
+          "description": "List of lifecycle policies"
+        },
+        "confirmation": {
+          "type": "string",
+          "description": "Confirmation to proceed with creation",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "efs_describe_lifecycle_configuration",
+      "description": "Get lifecycle configuration for an EFS file system",
+      "parameters": {
+        "filesystem_id": {
+          "type": "string",
+          "description": "ID of the EFS file system"
+        }
+      }
+    },
+    {
+      "name": "efs_delete_lifecycle_configuration",
+      "description": "Delete lifecycle configuration from an EFS file system",
+      "parameters": {
+        "filesystem_id": {
+          "type": "string",
+          "description": "ID of the EFS file system"
+        }
+      }
+    }
