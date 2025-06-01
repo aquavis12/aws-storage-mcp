@@ -48,67 +48,8 @@ This AWS Storage MCP server connects Amazon Q to your AWS storage services, allo
 
 ## Quick Start
 
-For detailed installation instructions, please refer to the [Installation Guide](docs/INSTALLATION.md).
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/aquavis12/aws-storage-mcp.git
-   cd aws-storage-mcp
-   ```
-
-2. **Configure AWS Credentials**
-   
-   Make sure you have valid AWS credentials in your `~/.aws/credentials` file (Linux/macOS) or `C:\Users\<username>\.aws\credentials` (Windows).
-   
-   ```ini
-   [default]
-   aws_access_key_id = YOUR_ACTUAL_ACCESS_KEY
-   aws_secret_access_key = YOUR_ACTUAL_SECRET_KEY
-   region = us-east-1
-   ```
-
-3. **Update Docker Volume Mapping**
-   
-   If you're using Windows with WSL, edit the `docker-compose.override.yml` file to correctly map your AWS credentials:
-   
-   ```yaml
-   services:
-     aws-storage-mcp:
-       volumes:
-         - /mnt/c/Users/<username>/.aws:/root/.aws:ro
-   ```
-   
-   For Linux/macOS:
-   
-   ```yaml
-   services:
-     aws-storage-mcp:
-       volumes:
-         - ~/.aws:/root/.aws:ro
-   ```
-
-4. **Build and Start the MCP Server**
-   ```bash
-   docker compose build
-   docker compose up -d
-   ```
-
-5. **Register with Amazon Q CLI**
-   ```bash
-   q mcp add --name aws-storage --command "docker compose -f $(pwd)/docker-compose.yml up" --scope global
-   ```
-
-6. **Start Using Natural Language Commands with Amazon Q Chat**
-   ```bash
-   q chat
-   ```
-   
-   Then type your natural language queries like:
-   ```
-   List my S3 buckets
-   ```
-
-For detailed usage examples, please refer to the [Usage Guide](docs/USAGE.md).
+*For detailed installation instructions, please refer to the [Installation Guide](docs/INSTALLATION.md).
+*For detailed usage examples, please refer to the [Usage Guide](docs/USAGE.md).
 
 ## Troubleshooting
 
