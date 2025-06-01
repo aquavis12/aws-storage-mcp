@@ -1,154 +1,195 @@
-# Usage Guide
+# Usage Guide for AWS Storage MCP Server
 
-This guide provides examples and instructions for using the AWS Storage MCP Server with Amazon Q CLI.
+This guide provides detailed instructions on how to use the AWS Storage MCP Server with Amazon Q CLI.
 
-## Basic Usage
+## Getting Started
 
-Once you have installed and configured the AWS Storage MCP Server, you can interact with AWS storage services using natural language commands through Amazon Q CLI.
+After completing the installation steps in the [Installation Guide](INSTALLATION.md), you can start using the AWS Storage MCP Server to interact with AWS storage services using natural language.
 
-### General Format
+### Starting the Server
 
-```bash
-q "Your natural language request about AWS storage services"
-```
+1. **Start the Docker container**:
+   ```bash
+   cd /path/to/aws-storage-mcp
+   docker compose up -d
+   ```
 
-## Examples by Service
+2. **Verify the server is running**:
+   ```bash
+   docker ps | grep aws-storage
+   ```
+   
+   You should see output similar to:
+   ```
+   6ac8abe70c80   aws-storage-mcp-aws-storage-mcp   "python src/server.p…"   7 seconds ago   Up 6 seconds   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp   aws-storage-mcp-aws-storage-mcp-1
+   ```
+
+3. **Test the server health**:
+   ```bash
+   curl http://localhost:8080/health
+   ```
+   
+   You should receive a response like:
+   ```json
+   {"status": "success", "message": "Server is running"}
+   ```
+
+### Using with Amazon Q CLI
+
+1. **Start Amazon Q Chat**:
+   ```bash
+   q chat
+   ```
+
+2. **Enter natural language queries** about AWS storage services:
+   ```
+   List my S3 buckets
+   ```
+   
+   ```
+   Show me my EBS volumes
+   ```
+
+## Example Commands
 
 ### Amazon S3
 
 #### List all S3 buckets
-```bash
-q "List all my S3 buckets"
-q "Show me my S3 buckets"
 ```
-
-#### Get bucket details
-```bash
-q "Get details about my bucket named example-bucket"
-q "What region is my bucket example-bucket in?"
-q "Is versioning enabled on my bucket example-bucket?"
+List my S3 buckets
 ```
 
 #### List objects in a bucket
-```bash
-q "List objects in my bucket example-bucket"
-q "Show me the contents of example-bucket"
-q "What files are in my S3 bucket example-bucket?"
+```
+Show me the contents of my bucket named example-bucket
+```
+
+#### Get bucket details
+```
+What region is my bucket example-bucket in?
 ```
 
 #### Create a new bucket
-```bash
-q "Create a new S3 bucket named new-example-bucket"
-q "Make a new S3 bucket called new-example-bucket in us-west-2"
 ```
-
-#### Delete a bucket
-```bash
-q "Delete my S3 bucket named old-example-bucket"
-q "Remove the bucket old-example-bucket"
+Create a new S3 bucket called my-new-bucket
 ```
 
 ### Amazon EBS
 
-#### List volumes
-```bash
-q "List all my EBS volumes"
-q "Show me my EBS volumes in us-east-1"
-q "What EBS volumes do I have?"
+#### List all EBS volumes
 ```
-
-#### Get volume details
-```bash
-q "Get details about volume vol-12345abcdef"
-q "Tell me about my EBS volume vol-12345abcdef"
+List my EBS volumes
 ```
 
 #### Create a snapshot
-```bash
-q "Create a snapshot of volume vol-12345abcdef"
-q "Take a snapshot of my EBS volume vol-12345abcdef"
 ```
-
-#### List snapshots
-```bash
-q "List all my EBS snapshots"
-q "Show me snapshots for volume vol-12345abcdef"
+Create a snapshot of my EBS volume vol-12345abcdef
 ```
 
 ### Amazon EFS
 
 #### List file systems
-```bash
-q "List all my EFS file systems"
-q "Show me my EFS file systems"
 ```
-
-#### Get file system details
-```bash
-q "Get details about file system fs-12345abc"
-q "Tell me about my EFS file system fs-12345abc"
+Show me my EFS file systems
 ```
 
 #### List mount targets
-```bash
-q "List mount targets for file system fs-12345abc"
-q "How can I mount my EFS file system fs-12345abc?"
+```
+How can I mount my EFS file system fs-12345abc?
 ```
 
-### Amazon FSx
+## Testing the API Directly
 
-#### List file systems
+You can also interact with the MCP server directly using curl commands:
+
+### List AWS Profiles
 ```bash
-q "List all my FSx file systems"
-q "Show me my FSx file systems"
+curl -s -X POST -H "Content-Type: application/json" -d '{"tool_name": "list_aws_profiles", "parameters": {}}' http://localhost:8080/invoke
 ```
 
-#### List backups
+### List S3 Buckets
 ```bash
-q "List all my FSx backups"
-q "Show me backups for FSx file system fs-12345abc"
+curl -s -X POST -H "Content-Type: application/json" -d '{"tool_name": "s3_list_buckets", "parameters": {}}' http://localhost:8080/invoke
 ```
 
-## Direct API Usage
-
-You can also interact with the server directly using curl:
-
+### List Objects in a Bucket
 ```bash
-curl -X POST http://localhost:8080 \
-  -H "Content-Type: application/json" \
-  -d '{"action": "s3_list_buckets", "params": {}}'
+curl -s -X POST -H "Content-Type: application/json" -d '{"tool_name": "s3_list_objects", "parameters": {"bucket_name": "example-bucket"}}' http://localhost:8080/invoke
 ```
 
-### Common API Actions
+## Troubleshooting
 
-#### S3 Actions
-- `s3_list_buckets`: List all S3 buckets
-- `s3_get_bucket_location`: Get bucket location
-  ```json
-  {"action": "s3_get_bucket_location", "params": {"bucket_name": "example-bucket"}}
-  ```
-- `s3_list_objects`: List objects in a bucket
-  ```json
-  {"action": "s3_list_objects", "params": {"bucket_name": "example-bucket"}}
-  ```
+### Common Issues
 
-#### EBS Actions
-- `ebs_list_volumes`: List all EBS volumes
-- `ebs_describe_volume`: Get volume details
-  ```json
-  {"action": "ebs_describe_volume", "params": {"volume_id": "vol-12345abcdef"}}
-  ```
+1. **"Unknown action" error**:
+   If you receive an error like `{"status": "error", "message": "Unknown action: None"}`, make sure you're using the correct format for your requests:
+   
+   ```bash
+   curl -s -X POST -H "Content-Type: application/json" -d '{"tool_name": "list_aws_profiles", "parameters": {}}' http://localhost:8080/invoke
+   ```
 
-#### EFS Actions
-- `efs_list_file_systems`: List all EFS file systems
-- `efs_list_mount_targets`: List mount targets for a file system
-  ```json
-  {"action": "efs_list_mount_targets", "params": {"file_system_id": "fs-12345abc"}}
-  ```
+2. **AWS credential errors**:
+   If you see errors related to AWS credentials, check:
+   - Your AWS credentials file contains valid credentials
+   - The Docker container has access to your credentials
+   - The volume mapping in `docker-compose.override.yml` is correct
 
-## Tips for Effective Usage
+3. **Container not starting**:
+   If the Docker container fails to start, check:
+   - Docker logs: `docker logs aws-storage-mcp-aws-storage-mcp-1`
+   - Docker-compose configuration: `docker-compose.yml` and `docker-compose.override.yml`
 
-1. **Be specific**: Include resource names, IDs, and regions when possible
-2. **Use natural language**: The MCP server understands conversational requests
-3. **Check permissions**: Ensure your AWS credentials have the necessary permissions
-4. **Explore capabilities**: Try different phrasings to discover what the server can do
+### Restarting the Server
+
+If you need to restart the server:
+
+```bash
+docker compose restart
+```
+
+Or to completely rebuild and restart:
+
+```bash
+docker compose down
+docker compose build
+docker compose up -d
+```
+
+## Advanced Usage
+
+### Using Different AWS Profiles
+
+To use a different AWS profile:
+
+```bash
+curl -s -X POST -H "Content-Type: application/json" -d '{"tool_name": "set_profile", "parameters": {"profile_name": "production"}}' http://localhost:8080/invoke
+```
+
+Then subsequent commands will use that profile:
+
+```bash
+curl -s -X POST -H "Content-Type: application/json" -d '{"tool_name": "s3_list_buckets", "parameters": {}}' http://localhost:8080/invoke
+```
+
+### API Documentation
+
+To view the API documentation:
+
+```bash
+curl http://localhost:8080/api
+```
+
+## Security Considerations
+
+- The MCP server runs with your AWS credentials
+- All operations are executed with your permissions
+- Consider using IAM roles with least privilege principles
+- Review the code before running in production environments
+
+## Getting Help
+
+If you encounter issues:
+
+1. Check the [Troubleshooting](#troubleshooting) section
+2. Review the Docker logs: `docker logs aws-storage-mcp-aws-storage-mcp-1`
+3. Open an issue on the GitHub repository

@@ -61,6 +61,16 @@ class S3Service(BaseService):
     
     def create_bucket(self, bucket_name):
         """Create a new S3 bucket"""
+        # Request confirmation before creating the bucket
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="S3 bucket",
+            params={"bucket_name": bucket_name, "region": self.region}
+        )
+        
+        if confirmation:
+            return confirmation
+            
         try:
             s3_client = self._get_client('s3')
             

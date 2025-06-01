@@ -74,6 +74,19 @@ class FSxService(BaseService):
     
     def create_backup(self, filesystem_id, backup_name):
         """Create a backup of an FSx file system"""
+        # Request confirmation before creating the backup
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="FSx backup",
+            params={
+                "filesystem_id": filesystem_id,
+                "backup_name": backup_name
+            }
+        )
+        
+        if confirmation:
+            return confirmation
+            
         try:
             fsx_client = self._get_client('fsx')
             response = fsx_client.create_backup(

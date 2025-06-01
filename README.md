@@ -56,27 +56,86 @@ For detailed installation instructions, please refer to the [Installation Guide]
    cd aws-storage-mcp
    ```
 
-2. **Run the Setup Script**
-   ```bash
-   ./setup.sh
+2. **Configure AWS Credentials**
+   
+   Make sure you have valid AWS credentials in your `~/.aws/credentials` file (Linux/macOS) or `C:\Users\<username>\.aws\credentials` (Windows).
+   
+   ```ini
+   [default]
+   aws_access_key_id = YOUR_ACTUAL_ACCESS_KEY
+   aws_secret_access_key = YOUR_ACTUAL_SECRET_KEY
+   region = us-east-1
    ```
 
-3. **Start the MCP Server**
-   ```bash
-   ./start-docker.sh
+3. **Update Docker Volume Mapping**
+   
+   If you're using Windows with WSL, edit the `docker-compose.override.yml` file to correctly map your AWS credentials:
+   
+   ```yaml
+   services:
+     aws-storage-mcp:
+       volumes:
+         - /mnt/c/Users/<username>/.aws:/root/.aws:ro
+   ```
+   
+   For Linux/macOS:
+   
+   ```yaml
+   services:
+     aws-storage-mcp:
+       volumes:
+         - ~/.aws:/root/.aws:ro
    ```
 
-4. **Register with Amazon Q CLI**
+4. **Build and Start the MCP Server**
+   ```bash
+   docker compose build
+   docker compose up -d
+   ```
+
+5. **Register with Amazon Q CLI**
    ```bash
    q mcp add --name aws-storage --command "docker compose -f $(pwd)/docker-compose.yml up" --scope global
    ```
 
-5. **Start Using Natural Language Commands**
+6. **Start Using Natural Language Commands with Amazon Q Chat**
    ```bash
-   q "List my S3 buckets"
+   q chat
+   ```
+   
+   Then type your natural language queries like:
+   ```
+   List my S3 buckets
    ```
 
 For detailed usage examples, please refer to the [Usage Guide](docs/USAGE.md).
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. **Check Docker Container Status**
+   ```bash
+   docker ps | grep aws-storage
+   ```
+
+2. **View Container Logs**
+   ```bash
+   docker logs aws-storage-mcp-aws-storage-mcp-1
+   ```
+
+3. **Test the API Directly**
+   ```bash
+   curl -s -X POST -H "Content-Type: application/json" -d '{"tool_name": "list_aws_profiles", "parameters": {}}' http://localhost:8080/invoke
+   ```
+
+4. **Verify AWS Credentials**
+   Make sure your AWS credentials are valid and have the necessary permissions.
+
+5. **Restart the Container**
+   ```bash
+   docker compose restart
+   ```
 
 ## Project Structure
 
@@ -86,6 +145,7 @@ aws-storage-mcp/
 ├── requirements.txt        # Python dependencies
 ├── mcp-manifest.json       # MCP server manifest
 ├── docker-compose.yml      # Docker configuration
+├── docker-compose.override.yml # Volume mapping for AWS credentials
 ├── Dockerfile              # Docker build instructions
 ├── setup.sh                # Environment setup script
 ├── start-docker.sh         # Server startup script

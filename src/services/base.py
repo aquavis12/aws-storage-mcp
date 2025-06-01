@@ -27,6 +27,36 @@ class BaseService:
             session = boto3.Session(profile_name=self.profile_name)
             return session.resource(service_name, region_name=self.region)
         return boto3.resource(service_name, region_name=self.region)
+        
+    def _request_confirmation(self, operation_type, resource_type, params=None):
+        """
+        Request user confirmation before creating resources
+        
+        Args:
+            operation_type (str): Type of operation (create, delete, etc.)
+            resource_type (str): Type of resource (bucket, volume, etc.)
+            params (dict): Parameters for the operation
+            
+        Returns:
+            dict: Response with status and message
+                  If status is "input_needed", the client should prompt for confirmation
+        """
+        # For create operations, always request confirmation
+        if operation_type.lower() == "create":
+            param_str = ""
+            if params:
+                param_str = ", ".join([f"{k}: {v}" for k, v in params.items()])
+            
+            return {
+                "status": "input_needed",
+                "input_type": "confirmation",
+                "message": f"Please confirm you want to create a new {resource_type} with parameters: {param_str}",
+                "operation": operation_type,
+                "resource_type": resource_type,
+                "parameters": params
+            }
+        
+        return None
     
     def list_aws_profiles(self):
         """List all available AWS profiles"""

@@ -31,14 +31,27 @@ class EBSService(BaseService):
     
     def create_volume(self, size, volume_type="gp3", availability_zone=None):
         """Create a new EBS volume"""
+        # If no AZ provided, get the first AZ in the region
+        ec2_client = self._get_client('ec2')
+        if not availability_zone:
+            azs = ec2_client.describe_availability_zones()
+            availability_zone = azs['AvailabilityZones'][0]['ZoneName']
+        
+        # Request confirmation before creating the volume
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="EBS volume",
+            params={
+                "size": f"{size} GiB", 
+                "volume_type": volume_type,
+                "availability_zone": availability_zone
+            }
+        )
+        
+        if confirmation:
+            return confirmation
+            
         try:
-            ec2_client = self._get_client('ec2')
-            
-            # If no AZ provided, get the first AZ in the region
-            if not availability_zone:
-                azs = ec2_client.describe_availability_zones()
-                availability_zone = azs['AvailabilityZones'][0]['ZoneName']
-            
             response = ec2_client.create_volume(
                 Size=size,
                 VolumeType=volume_type,
@@ -66,6 +79,19 @@ class EBSService(BaseService):
     
     def create_snapshot(self, volume_id, description=""):
         """Create a snapshot of an EBS volume"""
+        # Request confirmation before creating the snapshot
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="EBS snapshot",
+            params={
+                "volume_id": volume_id,
+                "description": description
+            }
+        )
+        
+        if confirmation:
+            return confirmation
+            
         try:
             ec2_client = self._get_client('ec2')
             response = ec2_client.create_snapshot(

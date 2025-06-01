@@ -29,6 +29,20 @@ class EFSService(BaseService):
     
     def create_filesystem(self, name):
         """Create a new EFS file system"""
+        # Request confirmation before creating the file system
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="EFS file system",
+            params={
+                "name": name,
+                "performance_mode": "generalPurpose",
+                "encrypted": "True"
+            }
+        )
+        
+        if confirmation:
+            return confirmation
+            
         try:
             efs_client = self._get_client('efs')
             response = efs_client.create_file_system(
@@ -63,6 +77,23 @@ class EFSService(BaseService):
     
     def create_mount_target(self, filesystem_id, subnet_id, security_groups=None):
         """Create a mount target for an EFS file system"""
+        # Request confirmation before creating the mount target
+        params_dict = {
+            "filesystem_id": filesystem_id,
+            "subnet_id": subnet_id
+        }
+        if security_groups:
+            params_dict["security_groups"] = security_groups
+            
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="EFS mount target",
+            params=params_dict
+        )
+        
+        if confirmation:
+            return confirmation
+            
         try:
             efs_client = self._get_client('efs')
             params = {

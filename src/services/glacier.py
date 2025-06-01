@@ -28,6 +28,16 @@ class GlacierService(BaseService):
     
     def create_vault(self, vault_name):
         """Create a new Glacier vault"""
+        # Request confirmation before creating the vault
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="Glacier vault",
+            params={"vault_name": vault_name}
+        )
+        
+        if confirmation:
+            return confirmation
+            
         try:
             glacier_client = self._get_client('glacier')
             response = glacier_client.create_vault(vaultName=vault_name)
@@ -72,6 +82,20 @@ class GlacierService(BaseService):
     
     def initiate_job(self, vault_name, job_type, description=""):
         """Initiate a Glacier job (inventory retrieval or archive retrieval)"""
+        # Request confirmation before initiating the job
+        confirmation = self._request_confirmation(
+            operation_type="create",
+            resource_type="Glacier job",
+            params={
+                "vault_name": vault_name,
+                "job_type": job_type,
+                "description": description
+            }
+        )
+        
+        if confirmation:
+            return confirmation
+            
         try:
             glacier_client = self._get_client('glacier')
             

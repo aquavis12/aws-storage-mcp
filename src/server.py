@@ -126,10 +126,39 @@ class MCPRequestHandler(BaseHTTPRequestHandler):
         
         try:
             request = json.loads(post_data)
-            action = request.get('action')
-            params = request.get('params', {})
+            logger.info(f"Raw request: {request}")
             
-            logger.info(f"Received request: {action} with params: {params}")
+            # Handle both MCP protocol format and original format
+            if self.path == '/invoke':
+                # MCP protocol format
+                tool_name = request.get('tool_name')
+                parameters = request.get('parameters', {})
+                
+                # Map tool_name to action for MCP protocol
+                action = tool_name
+                params = parameters
+                
+                # Handle user confirmation for create operations
+                if 'confirmation' in params and params.get('confirmation', '').lower() == 'confirmed':
+                    # User has confirmed the operation, proceed with original parameters
+                    # Remove the confirmation parameter
+                    original_params = params.copy()
+                    original_params.pop('confirmation', None)
+                    params = original_params
+            else:
+                # Original format
+                action = request.get('action')
+                params = request.get('params', {})
+                
+                # Handle user confirmation for create operations
+                if 'confirmation' in params and params.get('confirmation', '').lower() == 'confirmed':
+                    # User has confirmed the operation, proceed with original parameters
+                    # Remove the confirmation parameter
+                    original_params = params.copy()
+                    original_params.pop('confirmation', None)
+                    params = original_params
+            
+            logger.info(f"Processing request: action={action}, params={params}")
             
             # Set AWS profile if provided
             if 'profile_name' in params:
